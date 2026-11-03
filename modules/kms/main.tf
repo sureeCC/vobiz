@@ -11,4 +11,3 @@ module "kms" {
   key_rotation_period = "7776000s"
   labels              = var.labels
 }
-
