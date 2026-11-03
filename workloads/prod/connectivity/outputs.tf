@@ -1,8 +1,6 @@
 output "vpn_gateway" {
-  description = "GCP HA VPN gateway details, or null when disabled."
-  value       = try(module.aws_vpn[0].gateway, null)
+  value = module.ha_vpn.gateway
 }
 output "vpn_tunnel_names" {
-  description = "Created tunnel names, or an empty list."
-  value       = try(module.aws_vpn[0].tunnel_names, [])
+  value = module.ha_vpn.tunnel_names
 }

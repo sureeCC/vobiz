@@ -61,7 +61,27 @@ run "workload_identity_grants" {
     }
   }
   assert {
-    condition     = google_service_account_iam_member.workloads["metrics"].member == "serviceAccount:mock-vobiz-project.svc.id.goog[observability/metrics]"
+    condition     = module.workload_identity.members["metrics"] == "serviceAccount:mock-vobiz-project.svc.id.goog[observability/metrics]"
     error_message = "The binding must target the configured KSA, not all workloads."
+  }
+}
+
+run "optional_kms_and_build" {
+  command = plan
+  variables {
+    project_id    = "mock-vobiz-project"
+    kms_key_names = ["mock-key"]
+    build_triggers = {
+      mock-images = {
+        repository_resource      = "projects/mock-vobiz-project/locations/asia-south1/connections/mock-connection/repositories/mock-source"
+        service_account_resource = "projects/mock-vobiz-project/serviceAccounts/mock-builder@mock-vobiz-project.iam.gserviceaccount.com"
+        config_file              = "cloudbuild.yaml"
+        branch_regex             = "^main$"
+      }
+    }
+  }
+  assert {
+    condition     = module.encryption_keys.keyring_count == 1 && length(module.cloud_build.trigger_ids) == 1
+    error_message = "Explicit KMS and build configuration must create their resources through the modules."
   }
 }

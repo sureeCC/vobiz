@@ -1,6 +1,6 @@
 # Integration validation — 3 November 2026
 
-Validated on branch `codex/align-terraform-modules`, based on networking commit
+Validated on branch `feature/shared-public-modules`, based on networking commit
 `a338e51`, using Terraform 1.16.6. The original local scaffold remains unchanged.
 
 ## Results
@@ -8,7 +8,7 @@ Validated on branch `codex/align-terraform-modules`, based on networking commit
 - Repository-wide `terraform fmt -check -recursive` passed.
 - All nine deployment roots passed backend-free initialization and
   `terraform validate`, each with zero schema-validation warnings.
-- All 16 provider-mocked plans passed. Every provider is mocked; no GCP API calls
+- All 17 provider-mocked plans passed. Every provider is mocked; no GCP API calls
   or backend authentication occur in these plans.
 - Networking was rerun after adding the router address-migration block and the
   enabled default-route policy test; all three cases passed.
@@ -24,7 +24,7 @@ Validated on branch `codex/align-terraform-modules`, based on networking commit
 | foundation | 1 | Existing-project foundation |
 | network | 3 | VPC/NAT; router disabled; firewall/PSA/default-route policy enabled |
 | gke | 1 | Reusable private regional GKE module through workload root |
-| platform | 2 | Registry/secrets/Argo CD/monitoring; explicit workload identity grants |
+| platform | 3 | Registry/secrets/Argo CD/monitoring; workload identity; enabled KMS/build triggers |
 | connectivity | 2 | Disabled example and enabled four-tunnel topology |
 | edge | 2 | Disabled example and enabled HTTPS/DNS/IP configuration |
 | voice | 2 | Empty inventory and enabled VM configuration |
@@ -57,8 +57,8 @@ APIs, quotas, network/carrier behavior, Helm connectivity or application readine
 
 Real project/backend/IAM values, network-owner approval and handoff, approved node
 capacity, private runner access, application manifests and secrets remain required.
-New-project foundation and optional KMS/build triggers pass schema checks but have
-not been exercised by enabled mock cases. Review existing resource/state ownership
+New-project foundation passes schema checks but has not been exercised by an
+enabled mock case. Optional KMS/build triggers now have an enabled mock plan. Review existing resource/state ownership
 and all example name/CIDR changes before any deployment.
 
 Reproduce from the repository root:
@@ -67,3 +67,17 @@ Reproduce from the repository root:
 terraform fmt -check -recursive
 python scripts/validate.py --mock-plan
 ```
+
+## Resource module extraction
+
+All resource implementations now live under `modules/`, including 19 new modules
+for registry, secrets, IAM, observability, builds, keys, Argo CD, databases, buckets,
+DNS, addresses, HTTPS, HA VPN, voice VMs, project foundation and state storage.
+The module catalog has 22 resource entries including the two existing networking
+modules and GKE. Deployment roots keep environment inputs, module calls, lookup
+and provider configuration, backends and outputs. State prefixes are unchanged.
+
+Moved blocks map the previously inline resources and public-module calls into
+local resource modules. Live state migration still requires reviewing a real plan.
+The root-level output names and example inputs are preserved. Argo CD's Helm values
+remain environment-owned and are passed as text into its module.

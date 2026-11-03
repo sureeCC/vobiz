@@ -20,12 +20,15 @@ mock examples only. No infrastructure has been deployed.
 
 `landing-zone/organization` configures a project and project policies, not an entire
 GCP organization or folder hierarchy. Shared local networking modules remain in
-`modules/networking`; reusable GKE code is in `modules/gke`. Public upstream modules
+`modules/networking`; all remaining resource implementations are also under
+`modules/`. Deployment roots call those modules and own provider/backend
+configuration, environment inputs and outputs. See [module catalog](modules/README.md).
+Public upstream modules
 have exact version pins. Google/Google Beta providers are pinned to 7.46.1 across
 roots. The networking branch previously requested Google 8.x, but pinned platform modules
 require Google <8; 7.46.1 satisfies the integrated constraints.
-Provider configurations and backends belong to deployment roots, not GKE's
-reusable module. Commit each root's `.terraform.lock.hcl`.
+Provider configurations and backends belong to deployment roots, not reusable
+modules. Commit each root's `.terraform.lock.hcl`.
 
 The parent `workloads/prod` directory is the network root. Terraform does not load
 `.tf` files in its subdirectories. Each root uses separate state; never run a

@@ -42,7 +42,7 @@ run "mock_example_plan" {
     project_id = "mock-vobiz-project"
   }
   assert {
-    condition     = length(module.aws_vpn) == 0
+    condition     = module.ha_vpn.gateway_count == 0
     error_message = "Mock peer IPs must never enable a VPN by default."
   }
 }

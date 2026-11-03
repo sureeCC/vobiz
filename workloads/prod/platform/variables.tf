@@ -65,3 +65,27 @@ variable "build_triggers" {
   }))
   default = {}
 }
+
+variable "workload_project_grants" {
+  description = "Explicit additive project grants for approved workload principals. Prefer per-resource grants for secrets and registries."
+  type        = map(object({ role = string, member = string }))
+  default     = {}
+}
+
+variable "workload_identity_links" {
+  description = "Optional KSA-to-existing-GSA impersonation links. GitOps must set the matching iam.gke.io/gcp-service-account annotation."
+  type        = map(object({ service_account_id = string, namespace = string, kubernetes_service_account = string }))
+  default     = {}
+}
+
+variable "kms_keyring_name" {
+  description = "Optional CMEK key ring name. Wire service-agent permissions and resource encryption only after agreeing key ownership."
+  type        = string
+  default     = "vobiz-prod-keyring"
+}
+
+variable "kms_key_names" {
+  description = "Optional symmetric keys. Empty until a CMEK requirement is confirmed."
+  type        = list(string)
+  default     = []
+}

@@ -42,7 +42,7 @@ run "mock_example_plan" {
     project_id = "mock-vobiz-project"
   }
   assert {
-    condition     = length(module.https) == 0 && length(module.dns) == 0 && length(google_compute_address.voice) == 0
+    condition     = module.https_load_balancer.instance_count == 0 && module.cloud_dns.zone_count == 0 && module.external_addresses.address_count == 0
     error_message = "Public endpoints and DNS must stay disabled in the initial examples."
   }
 }

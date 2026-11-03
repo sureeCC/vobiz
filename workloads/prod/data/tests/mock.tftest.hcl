@@ -43,7 +43,7 @@ run "mock_example_plan" {
     project_id = "mock-vobiz-project"
   }
   assert {
-    condition     = length(module.postgresql) == 0 && length(module.redis) == 0 && length(module.buckets) == 0
+    condition     = module.cloud_sql.instance_count == 0 && module.redis_service.instance_count == 0 && module.cloud_storage.bucket_count == 0
     error_message = "Initial examples must not provision managed data services while AWS holds the data."
   }
 }

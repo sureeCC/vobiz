@@ -42,7 +42,7 @@ run "mock_example_plan" {
     project_id = "mock-vobiz-project"
   }
   assert {
-    condition     = length(module.instances) == 0
+    condition     = module.voice_vm.instance_count == 0
     error_message = "No voice VMs may be inferred from an unresolved inventory."
   }
 }
