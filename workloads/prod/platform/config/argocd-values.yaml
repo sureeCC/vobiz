@@ -1,0 +1,23 @@
+# Foundation bootstrap only. Application definitions and private Git credentials
+# are later GitOps work. Access this ClusterIP service through a private tunnel.
+server:
+  replicas: 2
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+repoServer:
+  replicas: 2
+controller:
+  replicas: 1
+redis-ha:
+  enabled: true
+redis:
+  enabled: false
+configs:
+  params:
+    server.insecure: false
+  rbac:
+    policy.default: ""
+# Complete SSO/RBAC mapping before granting team access. No application wildcard
+# permissions or external load balancer is created by this bootstrap chart.

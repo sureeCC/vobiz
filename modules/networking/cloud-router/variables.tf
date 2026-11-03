@@ -14,34 +14,6 @@ variable "name" {
   description = "Name of the router"
 }
 
-variable "create_router" {
-  type        = bool
-  default     = false
-  description = "Create router instead of using an existing one, uses 'router' variable for new resource name."
-}
-
-variable "log_config_enable" {
-  type       = bool
-  default    = false
-  deprecated = "Indicates whether or not to export logs"
-}
-
-variable "log_config_filter" {
-  type        = string
-  default     = "ALL"
-  description = "Specifies the desired filtering of logs on this NAT. Valid values are: 'ERRORS_ONLY', 'TRANSLATIONS_ONLY', 'ALL'"
-}
-
-variable "subnetworks" {
-  type = list(object({
-    name                     = string,
-    source_ip_ranges_to_nat  = list(string)
-    secondary_ip_range_names = list(string)
-  }))
-  description = "Specifies one or more subnetwork NAT configurations"
-  default     = []
-}
-
 variable "description" {
   type        = string
   description = "An optional description of this resource"

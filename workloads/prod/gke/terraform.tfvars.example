@@ -1,0 +1,27 @@
+cluster_name             = "vobiz-prod-as1-gke"
+network_name             = "vobiz-prod-vpc"
+subnetwork_name          = "vobiz-prod-as1-subnet-gke"
+pod_range_name           = "vobiz-prod-as1-range-pods"
+service_range_name       = "vobiz-prod-as1-range-services"
+zones                    = ["asia-south1-a", "asia-south1-b", "asia-south1-c"]
+node_service_account_name = "vobiz-prod-gke-node"
+control_plane_cidr       = "10.80.17.0/28"
+enable_private_endpoint  = true
+master_authorized_networks = [
+  { cidr_block = "10.80.0.0/20", display_name = "mock-private-administration-range" }
+]
+release_channel        = "REGULAR"
+maintenance_start_time = "20:30"
+# MOCK CAPACITY: 3 nodes total initially; this is NOT production workload sizing.
+# The earlier 15-node scenario was also unapproved; do not deploy based on it.
+node_pools = [{
+  name                   = "application"
+  machine_type           = "e2-standard-8"
+  total_min_count        = 3
+  total_max_count        = 6
+  initial_nodes_per_zone = 1
+  disk_size_gb           = 100
+  labels                 = { workload = "application" }
+  taints                 = []
+}]
+# Define dedicated signaling/media pools here after benchmarks and placement review.

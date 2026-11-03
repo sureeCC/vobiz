@@ -1,0 +1,27 @@
+# All identities and organisation/billing values below are mocks.
+create_project     = false
+project_name       = "Vobiz production"
+organization_id    = "000000000000"
+folder_id          = ""
+billing_account_id = "000000-000000-000000"
+enabled_apis = [
+  "serviceusage.googleapis.com", "cloudresourcemanager.googleapis.com",
+  "iam.googleapis.com", "iamcredentials.googleapis.com", "orgpolicy.googleapis.com",
+  "compute.googleapis.com", "container.googleapis.com", "artifactregistry.googleapis.com",
+  "secretmanager.googleapis.com", "storage.googleapis.com", "logging.googleapis.com",
+  "monitoring.googleapis.com", "iap.googleapis.com", "oslogin.googleapis.com",
+  "cloudbuild.googleapis.com", "dns.googleapis.com", "certificatemanager.googleapis.com",
+  "cloudkms.googleapis.com"
+]
+project_iam_members = {
+  example_readers = { role = "roles/viewer", member = "group:cloud-readers@example.com" }
+}
+service_accounts = {
+  vobiz-prod-build = {
+    display_name = "Vobiz production image builder"
+    description  = "Build identity; repository permissions are owned by platform."
+    roles        = ["roles/logging.logWriter"]
+  }
+}
+audit_services           = ["secretmanager.googleapis.com", "iam.googleapis.com"]
+project_boolean_policies = {}

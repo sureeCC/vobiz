@@ -1,0 +1,15 @@
+# No voice VMs are provisioned until the inventory/placement is approved.
+subnetwork_name      = "vobiz-prod-as1-subnet-voice"
+service_account_name = "vobiz-prod-voice"
+instances            = {}
+# Mock example; replace with an immutable image and benchmarked size:
+# instances = {
+#   vobiz-prod-sbc-01 = {
+#     zone             = "asia-south1-a"
+#     machine_type     = "e2-standard-4"
+#     source_image     = "projects/PROJECT_ID/global/images/MOCK_APPROVED_IMAGE"
+#     disk_size_gb     = 100
+#     assign_public_ip = false
+#     network_tags     = ["iap-ssh", "vobiz-sbc"]
+#   }
+# }

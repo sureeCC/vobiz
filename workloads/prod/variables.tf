@@ -1,17 +1,7 @@
-variable "project_id" {
-  type        = string
-  description = "ID of the Project."
-}
-
-variable "region" {
-  type    = string
-  default = "asia-south1"
-}
-
 ### VNet ###
 variable "network_name" {
-  type    = string
-  default = "The name of the network being created"
+  type        = string
+  description = "Name of the VPC owned by the network layer."
 }
 
 variable "routing_mode" {
@@ -154,28 +144,7 @@ variable "router_name" {
 variable "create_router" {
   type        = bool
   default     = false
-  description = "Create router instead of using an existing one, uses 'router' variable for new resource name."
-}
-
-variable "log_config_enable" {
-  type       = bool
-  default    = false
-  deprecated = "Indicates whether or not to export logs"
-}
-
-variable "log_config_filter" {
-  type        = string
-  default     = "ALL"
-  description = "Specifies the desired filtering of logs on this NAT. Valid values are: 'ERRORS_ONLY', 'TRANSLATIONS_ONLY', 'ALL'"
-}
-
-variable "subnetworks" {
-  type = list(object({
-    name                     = string,
-    source_ip_ranges_to_nat  = list(string)
-    secondary_ip_range_names = list(string)
-  }))
-  description = "Specifies one or more subnetwork NAT configurations"
+  description = "Create the egress router and its configured NATs; false leaves routing external."
 }
 
 variable "router_description" {
@@ -214,9 +183,4 @@ variable "nats" {
   }))
   default     = []
   description = "NATs to deploy on this router."
-}
-
-variable "network" {
-  type        = string
-  description = "A reference to the network to which this router belongs"
 }

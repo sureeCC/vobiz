@@ -1,0 +1,42 @@
+cluster_name = "vobiz-prod-as1-gke"
+repositories = {
+  vobiz-prod-as1-containers = {
+    description = "Production application images and OCI Helm charts"
+    readers     = ["serviceAccount:vobiz-prod-gke-node@PROJECT_ID.iam.gserviceaccount.com"]
+    writers     = ["serviceAccount:vobiz-prod-build@PROJECT_ID.iam.gserviceaccount.com"]
+  }
+}
+secret_names                = ["vobiz-prod-db-connection", "vobiz-prod-provider-credentials"]
+secret_accessors            = {}
+argocd_namespace            = "argocd"
+argocd_chart_version        = "10.10.5"
+argocd_values_file          = "config/argocd-values.yaml"
+log_bucket_id               = "vobiz-prod-workloads"
+log_sink_name               = "vobiz-prod-workloads"
+log_retention_days          = 30
+log_sink_filter             = "resource.type=\"k8s_container\" AND resource.labels.cluster_name=\"vobiz-prod-as1-gke\""
+alert_email_addresses       = [] # Replace with approved recipients, e.g. ops@example.com.
+container_restart_threshold = 5
+build_triggers              = {}
+kms_keyring_name            = "vobiz-prod-keyring"
+kms_key_names               = []
+# Mock example only; connect the real repository and populate service-account IAM first:
+# build_triggers = {
+#   vobiz-images = {
+#     repository_resource      = "projects/PROJECT_ID/locations/asia-south1/connections/MOCK_CONNECTION/repositories/MOCK_REPOSITORY"
+#     service_account_resource = "projects/PROJECT_ID/serviceAccounts/vobiz-prod-build@PROJECT_ID.iam.gserviceaccount.com"
+#     config_file              = "cloudbuild.yaml"
+#     branch_regex             = "^main$"
+#   }
+# }
+
+# Optional additive IAM grants; GitOps owns Kubernetes service accounts.
+workload_project_grants = {}
+workload_identity_links = {}
+# workload_identity_links = {
+#   api = {
+#     service_account_id = "projects/PROJECT_ID/serviceAccounts/vobiz-prod-api@PROJECT_ID.iam.gserviceaccount.com"
+#     namespace = "vobiz"
+#     kubernetes_service_account = "api"
+#   }
+# }

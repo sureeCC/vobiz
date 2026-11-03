@@ -1,0 +1,26 @@
+# Disabled until the AWS connectivity design and access are agreed.
+enable_aws_vpn       = false
+network_name         = "vobiz-prod-vpc"
+vpn_name             = "vobiz-prod-aws-ha-vpn"
+peer_gateway_name    = "vobiz-mock-aws-gateway"
+peer_redundancy_type = "FOUR_IPS_REDUNDANCY"
+gcp_router_asn       = 64514
+aws_router_asn       = 64512
+# RFC 5737 documentation addresses: NEVER deploy these as real AWS endpoints.
+peer_interfaces = [
+  { id = 0, ip_address = "192.0.2.10" },
+  { id = 1, ip_address = "192.0.2.11" },
+  { id = 2, ip_address = "192.0.2.12" },
+  { id = 3, ip_address = "192.0.2.13" }
+]
+advertised_ranges = {
+  "10.80.0.0/20" = "Mock private nodes"
+  "10.84.0.0/16" = "Mock Pod range; review source NAT behavior"
+}
+tunnels = {
+  tunnel-0 = { peer_bgp_address = "169.254.10.1", gcp_bgp_cidr = "169.254.10.2/30", gcp_interface = 0, peer_interface = 0 }
+  tunnel-1 = { peer_bgp_address = "169.254.11.1", gcp_bgp_cidr = "169.254.11.2/30", gcp_interface = 0, peer_interface = 1 }
+  tunnel-2 = { peer_bgp_address = "169.254.12.1", gcp_bgp_cidr = "169.254.12.2/30", gcp_interface = 1, peer_interface = 2 }
+  tunnel-3 = { peer_bgp_address = "169.254.13.1", gcp_bgp_cidr = "169.254.13.2/30", gcp_interface = 1, peer_interface = 3 }
+}
+# Do not put shared secrets in committed files. Supply the sensitive variable via CI.

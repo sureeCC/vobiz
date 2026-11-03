@@ -1,6 +1,6 @@
 module "cloud_router" {
   source  = "terraform-google-modules/cloud-router/google"
-  version = "~> 9.1"
+  version = "9.1.0"
 
   name   = var.name
   region = var.region

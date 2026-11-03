@@ -1,0 +1,40 @@
+module "gke" {
+  source  = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
+  version = "46.0.0"
+
+  project_id                           = var.project_id
+  name                                 = var.cluster_name
+  regional                             = true
+  region                               = var.region
+  zones                                = var.zones
+  network                              = data.google_compute_network.production.name
+  subnetwork                           = data.google_compute_subnetwork.private.name
+  ip_range_pods                        = var.pod_range_name
+  ip_range_services                    = var.service_range_name
+  enable_private_nodes                 = true
+  enable_private_endpoint              = var.enable_private_endpoint
+  ip_endpoints_enabled                 = true
+  dns_allow_external_traffic           = false
+  dns_enable_k8s_tokens_via_dns        = false
+  master_ipv4_cidr_block               = var.control_plane_cidr
+  master_authorized_networks           = var.master_authorized_networks
+  deletion_protection                  = true
+  remove_default_node_pool             = true
+  initial_node_count                   = 1
+  release_channel                      = var.release_channel
+  identity_namespace                   = "enabled"
+  create_service_account               = false
+  service_account                      = module.node_identity.email
+  node_pools                           = local.node_pools
+  node_pools_labels                    = local.node_pool_labels
+  node_pools_taints                    = local.node_pool_taints
+  enable_shielded_nodes                = true
+  datapath_provider                    = "ADVANCED_DATAPATH"
+  network_policy                       = false # Dataplane V2 provides network policy enforcement.
+  gateway_api_channel                  = "CHANNEL_STANDARD"
+  enable_secret_manager_addon          = true
+  monitoring_enable_managed_prometheus = true
+  enable_cost_allocation               = true
+  configure_ip_masq                    = false
+  maintenance_start_time               = var.maintenance_start_time
+}

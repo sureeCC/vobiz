@@ -1,0 +1,22 @@
+# This layer is optional and creates nothing with these mock values.
+enable_http_load_balancer = false
+http_load_balancer_name   = "vobiz-prod-https"
+http_address_name         = "vobiz-prod-https-ip"
+armor_policy_name         = "vobiz-prod-http-policy"
+http_domains              = ["api.example.com"]
+http_backends             = {}
+voice_address_names       = []
+dns_zones                 = {}
+# For a reviewed Terraform-owned instance-group LB (not GKE Gateway):
+# http_backends = {
+#   default = {
+#     port = 8080
+#     port_name = "http"
+#     timeout_seconds = 30
+#     health_check_path = "/health"
+#     instance_group_self_links = ["https://www.googleapis.com/compute/v1/projects/PROJECT_ID/zones/asia-south1-a/instanceGroups/MOCK_GROUP"]
+#   }
+# }
+# dns_zones = {
+#   mock-public-zone = { domain = "example.com.", description = "Mock zone", records = [] }
+# }

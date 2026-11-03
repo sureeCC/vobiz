@@ -1,0 +1,5 @@
+project_id                  = "PROJECT ID"
+region                      = "asia-south1"
+state_bucket_name           = "REPLACE_WITH_GLOBALLY_UNIQUE_STATE_BUCKET"
+impersonate_service_account = null
+state_admin_members         = ["group:terraform-admins@example.com"]

@@ -1,0 +1,18 @@
+**/.terraform/*
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/crash.log
+**/crash.*.log
+**/*.tfvars
+**/*.tfvars.json
+**/backend.hcl
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+!**/*.example
+# Commit .terraform.lock.hcl files; they pin provider checksums.
+
+**/__pycache__/
+landing-zone/bootstrap/backend.tf

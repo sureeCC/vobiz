@@ -1,13 +1,12 @@
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 8.8"
-    }
-  }
-}
-
 provider "google" {
-  project = "vobiz-analytics"
-  region  = "asia-south1"
+  project                     = var.project_id
+  region                      = var.region
+  impersonate_service_account = var.impersonate_service_account
+  default_labels              = var.labels
+}
+provider "google-beta" {
+  project                     = var.project_id
+  region                      = var.region
+  impersonate_service_account = var.impersonate_service_account
+  default_labels              = var.labels
 }

@@ -1,0 +1,10 @@
+# MOCK VALUES ONLY. Copy to common.tfvars and replace before planning.
+project_id                  = "PROJECT ID"
+region                      = "asia-south1"
+environment                 = "prod"
+impersonate_service_account = null
+labels = {
+  application = "vobiz"
+  environment = "prod"
+  managed_by  = "terraform"
+}

@@ -32,3 +32,10 @@ output "subnets_secondary_ranges" {
   value       = module.vpc.subnets_secondary_ranges
   description = "The secondary ranges associated with these subnets"
 }
+
+output "router" {
+  value = try(module.cloud_router[0].router, null)
+}
+output "nat" {
+  value = try(module.cloud_router[0].nat, null)
+}
