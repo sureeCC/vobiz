@@ -4,7 +4,8 @@ variable "project_id" {
 }
 
 variable "network_name" {
-  type = string
+  type        = string
+  description = "Name of the Network"
 }
 
 variable "routing_mode" {

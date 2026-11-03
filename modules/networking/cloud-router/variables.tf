@@ -20,18 +20,6 @@ variable "create_router" {
   description = "Create router instead of using an existing one, uses 'router' variable for new resource name."
 }
 
-variable "log_config_enable" {
-  type       = bool
-  default    = false
-  deprecated = "Indicates whether or not to export logs"
-}
-
-variable "log_config_filter" {
-  type        = string
-  default     = "ALL"
-  description = "Specifies the desired filtering of logs on this NAT. Valid values are: 'ERRORS_ONLY', 'TRANSLATIONS_ONLY', 'ALL'"
-}
-
 variable "subnetworks" {
   type = list(object({
     name                     = string,

@@ -95,6 +95,7 @@ variable "egress_rules" {
     }))
   }))
   description = "List of egress rules. This will be ignored if variable 'rules' is non-empty"
+  default     = []
 }
 
 variable "ingress_rules" {
@@ -123,6 +124,7 @@ variable "ingress_rules" {
     }))
   }))
   description = "List of ingress rules. This will be ignored if variable 'rules' is non-empty"
+  default     = []
 }
 
 variable "private_service_access_config" {
@@ -132,16 +134,23 @@ variable "private_service_access_config" {
     prefix_length                      = number
   })
   description = "Configuration for Private Service Access (PSA) connection."
+  default = {
+    "address_name" : "private-ip-address",
+    "enable_private_services_connection" : false,
+    "prefix_length" : 16
+  }
 }
 
 variable "delete_default_internet_gateway_routes" {
   type        = bool
   description = "If set, ensure that all routes within the network specified whose names begin with 'default-route' and with a next hop of 'default-internet-gateway' are deleted"
+  default     = false
 }
 
 variable "vnet_description" {
   type        = string
   description = "An optional description of this resource. The resource must be recreated to modify this field."
+  default     = ""
 }
 
 ### Cloud Router ###
@@ -158,24 +167,15 @@ variable "create_router" {
 }
 
 variable "log_config_enable" {
-  type       = bool
-  default    = false
-  deprecated = "Indicates whether or not to export logs"
+  type        = bool
+  default     = false
+  description = "Indicates whether or not to export logs"
 }
 
 variable "log_config_filter" {
   type        = string
   default     = "ALL"
   description = "Specifies the desired filtering of logs on this NAT. Valid values are: 'ERRORS_ONLY', 'TRANSLATIONS_ONLY', 'ALL'"
-}
-
-variable "subnetworks" {
-  type = list(object({
-    name                     = string,
-    source_ip_ranges_to_nat  = list(string)
-    secondary_ip_range_names = list(string)
-  }))
-  description = "Specifies one or more subnetwork NAT configurations"
 }
 
 variable "router_description" {

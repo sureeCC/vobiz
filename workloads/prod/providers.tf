@@ -8,6 +8,7 @@ terraform {
 }
 
 provider "google" {
-  project = "vobiz-analytics"
-  region  = "asia-south1"
+  project                     = "gcp-voice-infra"
+  region                      = "asia-south1"
+  impersonate_service_account = "terraform-infra@gcp-voice-infra.iam.gserviceaccount.com"
 }
