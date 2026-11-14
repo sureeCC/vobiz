@@ -1,5 +1,5 @@
 ### Common ###
-project_id = "vobiz-analytics"
+project_id = "gcp-voice-infra"
 region     = "asia-south1"
 
 ### VNet ###
@@ -23,7 +23,7 @@ subnets = [
   },
   {
     subnet_name               = "subnet-03"
-    subnet_ip                 = "10.10.30.0/24"
+    subnet_ip                 = "10.80.30.0/24"
     subnet_region             = "asia-south1"
     subnet_flow_logs          = "true"
     subnet_flow_logs_interval = "INTERVAL_10_MIN"
@@ -50,14 +50,14 @@ nats = [
 
     subnetworks = [
       {
-        name = "private"
+        name = "projects/gcp-voice-infra/regions/asia-south1/subnetworks/private"
         source_ip_ranges_to_nat = [
-          "10.80.0.0/20",
-          "10.10.30.0/24"
+          "PRIMARY_IP_RANGE",
+          "LIST_OF_SECONDARY_IP_RANGES"
         ]
 
         secondary_ip_range_names = [
-          "10.84.0.0/16"
+          "pod-secondary"
         ]
     }]
 

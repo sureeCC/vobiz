@@ -11,7 +11,8 @@ module "vpc" {
 }
 
 module "cloud_router" {
-  source = "../../modules/networking/cloud-router"
+  source     = "../../modules/networking/cloud-router"
+  depends_on = [module.vpc]
 
   name        = var.router_name
   region      = var.region
