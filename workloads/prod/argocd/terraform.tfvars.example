@@ -1,0 +1,6 @@
+project_id = "REPLACE_PROJECT"
+region = "asia-south1"
+cluster_name = "REPLACE_EXISTING_GKE_CLUSTER"
+cluster_location = "asia-south1"
+# Use reviewed values for SSO/RBAC and HA; the default is an internal bootstrap.
+values = []

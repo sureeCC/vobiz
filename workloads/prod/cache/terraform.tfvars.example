@@ -1,0 +1,7 @@
+project_id = "REPLACE_PROJECT"
+region = "asia-south1"
+name = "prod-cache"
+network_id = "projects/REPLACE_PROJECT/global/networks/prod-vpc"
+memory_size_gb = 5
+connect_mode = "PRIVATE_SERVICE_ACCESS"
+# Requires an existing network-owned PSA connection.

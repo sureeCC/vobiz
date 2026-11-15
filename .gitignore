@@ -38,3 +38,19 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+# New independent deployment roots commit provider locks.
+!workloads/prod/cache/.terraform.lock.hcl
+!workloads/prod/registry/.terraform.lock.hcl
+!workloads/prod/secrets/.terraform.lock.hcl
+!workloads/prod/identity/.terraform.lock.hcl
+!workloads/prod/argocd/.terraform.lock.hcl
+**/backend.hcl
+*.tfplan
+gha-creds-*.json
+
+# Local validation and deployment artifacts
+__pycache__/
+*.pyc
+plan-manifest.json
+plan.txt
+plan.json

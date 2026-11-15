@@ -1,0 +1,8 @@
+project_id = "REPLACE_PROJECT"
+region = "asia-south1"
+repositories = {
+ application = {
+  readers = ["serviceAccount:REPLACE_NODE_SA@REPLACE_PROJECT.iam.gserviceaccount.com"]
+  writers = ["serviceAccount:REPLACE_BUILD_SA@REPLACE_PROJECT.iam.gserviceaccount.com"]
+ }
+}

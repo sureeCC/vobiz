@@ -1,0 +1,10 @@
+project_id = "REPLACE_PROJECT"
+region = "asia-south1"
+workload_pool_project_id = "REPLACE_PROJECT"
+accounts = {
+ app-runtime = {
+  namespace = "application"
+  kubernetes_service_account = "application"
+  # Prefer resource-scoped grants in registry/secrets over project_roles.
+ }
+}
