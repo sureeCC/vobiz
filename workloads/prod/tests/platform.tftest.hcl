@@ -3,13 +3,14 @@ mock_provider "google-beta" {
   mock_resource "google_compute_network" {
     override_during = plan
     defaults = {
-      id        = "projects/test-project/global/networks/test-vpc"
-      self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/test-vpc"
+      id        = "projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
+      self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
     }
   }
 }
 
 variables {
+  naming_sequences = { "secret/regional" = 2 }
   repositories = {
     app = {
       readers = ["serviceAccount:node@test-project.iam.gserviceaccount.com"]
@@ -39,7 +40,7 @@ variables {
   routes             = []
   router_name        = "test-router"
   router_description = "Test router"
-  network            = "projects/test-project/global/networks/test-vpc"
+  network            = "projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
   nats = [{
     name                               = "test-nat"
     nat_ip_allocate_option             = "AUTO_ONLY"
@@ -51,16 +52,17 @@ variables {
 run "integrated_platform" {
   command = plan
   assert {
-    condition     = output.registry_docker_urls["app"] == "asia-south1-docker.pkg.dev/test-project/app" && length(output.secrets_secret_ids) == 2 && length(module.cache) == 1
+    condition     = output.registry_docker_urls["app"] == "asia-south1-docker.pkg.dev/test-project/ar-vobiz-prod-asia-south1-001" && length(output.secrets_secret_ids) == 2 && length(module.cache) == 1
     error_message = "The production plan must include registry, secrets and Redis together."
   }
 }
 run "empty_platform" {
   command = plan
   variables {
-    repositories = {}
-    secrets      = {}
-    cache        = null
+    naming_sequences = {}
+    repositories     = {}
+    secrets          = {}
+    cache            = null
     private_service_access_config = {
       enable_private_services_connection = false
       address_name                       = "test-psa"

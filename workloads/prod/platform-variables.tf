@@ -6,7 +6,7 @@ variable "repositories" {
     immutable_tags = optional(bool, true)
   }))
   default     = {}
-  description = "Physical Docker repository IDs and repository-scoped IAM members."
+  description = "Logical Docker repository keys and repository-scoped IAM members. Physical IDs are generated."
 }
 variable "secrets" {
   type = map(object({
@@ -14,11 +14,11 @@ variable "secrets" {
     replication_locations = optional(set(string), [])
   }))
   default     = {}
-  description = "Physical secret IDs and accessor IAM members. Empty locations uses automatic replication. Values are populated outside Terraform."
+  description = "Logical secret keys and accessor IAM members. Physical IDs are generated. Empty locations uses automatic replication. Values are populated outside Terraform."
 }
 variable "cache" {
   type = object({
-    name                 = string
+    name                 = optional(string)
     memory_size_gb       = optional(number, 5)
     tier                 = optional(string, "STANDARD_HA")
     redis_version        = optional(string, "REDIS_7_2")

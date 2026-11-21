@@ -10,8 +10,9 @@ variable "region" {
 
 ### VNet ###
 variable "network_name" {
-  type    = string
-  default = "The name of the network being created"
+  type        = string
+  default     = null
+  description = "Legacy input; physical VPC names now come from the naming module."
 }
 
 variable "routing_mode" {
@@ -130,7 +131,7 @@ variable "ingress_rules" {
 variable "private_service_access_config" {
   type = object({
     enable_private_services_connection = bool
-    address_name                       = string
+    address_name                       = optional(string, "private-ip-address")
     prefix_length                      = number
   })
   description = "Configuration for Private Service Access (PSA) connection."
@@ -157,7 +158,8 @@ variable "vnet_description" {
 
 variable "router_name" {
   type        = string
-  description = "Name of the router"
+  default     = null
+  description = "Legacy input; physical router names now come from the naming module."
 }
 
 variable "create_router" {
@@ -218,5 +220,6 @@ variable "nats" {
 
 variable "network" {
   type        = string
-  description = "A reference to the network to which this router belongs"
+  default     = null
+  description = "Legacy input; the router now uses the managed VPC output."
 }

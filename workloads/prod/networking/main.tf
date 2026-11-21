@@ -21,7 +21,7 @@ module "cloud_router" {
   name        = var.router_name
   region      = var.region
   project_id  = var.project_id
-  network     = var.network
+  network     = module.vpc.network_id
   description = var.router_description
   nats        = var.nats
 }

@@ -3,8 +3,8 @@ mock_provider "google-beta" {
   mock_resource "google_compute_network" {
     override_during = plan
     defaults = {
-      id        = "projects/test-project/global/networks/test-vpc"
-      self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/test-vpc"
+      id        = "projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
+      self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
     }
   }
 }
@@ -22,7 +22,7 @@ variables {
   routes             = []
   router_name        = "test-router"
   router_description = "Test router"
-  network            = "projects/test-project/global/networks/test-vpc"
+  network            = "projects/test-project/global/networks/vn-vobiz-prod-asia-south1-001"
   nats = [{
     name                               = "test-nat"
     nat_ip_allocate_option             = "AUTO_ONLY"
@@ -33,7 +33,7 @@ variables {
 run "production_networking" {
   command = plan
   assert {
-    condition     = output.network_name == "test-vpc" && length(output.subnets_names) == 1 && output.subnets_names[0] == "private"
+    condition     = output.network_name == "vn-vobiz-prod-asia-south1-001" && length(output.subnets_names) == 1 && output.subnets_names[0] == "sn-vobiz-prod-asia-south1-001"
     error_message = "Root outputs must preserve network and subnet names through the child module."
   }
 }
@@ -83,4 +83,40 @@ run "firewall_without_psa" {
     condition     = toset(keys(google_project_service.platform)) == toset(["compute.googleapis.com"])
     error_message = "Firewall-only configuration must enable Compute without adding PSA."
   }
+}
+
+run "network_reference_names" {
+  command = plan
+  variables {
+    subnets = [
+      { subnet_name = "private", subnet_ip = "10.80.0.0/20", subnet_region = "asia-south1" },
+      { subnet_name = "secondary", subnet_ip = "10.81.0.0/20", subnet_region = "asia-south2" }
+    ]
+    secondary_ranges = {
+      private = [
+        { range_name = "pods", ip_cidr_range = "10.84.0.0/16" },
+        { range_name = "services", ip_cidr_range = "10.85.0.0/20" }
+      ]
+    }
+    naming_sequences = { "range/private/services" = 2 }
+    nats = [{
+      name                               = "egress"
+      nat_ip_allocate_option             = "AUTO_ONLY"
+      source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+      subnetworks = [{
+        name                     = "private"
+        source_ip_ranges_to_nat  = ["LIST_OF_SECONDARY_IP_RANGES"]
+        secondary_ip_range_names = ["pods", "services"]
+      }]
+    }]
+  }
+  assert {
+    condition     = output.resource_names["subnet/secondary"] == "sn-vobiz-prod-asia-south2-001" && output.resource_names["range/private/services"] == "sr-vobiz-prod-asia-south1-002"
+    error_message = "Names must use the actual subnet region and preserve explicit sequence assignments."
+  }
+}
+run "reject_unknown_sequence_key" {
+  command = plan
+  variables { naming_sequences = { "subnet/typo" = 2 } }
+  expect_failures = [var.naming_sequences]
 }

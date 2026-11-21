@@ -25,7 +25,11 @@ def run_tests():
         result = execute("test", "-json", "-verbose", "-no-color",
                          capture_output=True, text=True, encoding="utf-8")
     except subprocess.CalledProcessError as exc:
-        print(exc.stdout or "")
+        for line in (exc.stdout or "").splitlines():
+            event = json.loads(line)
+            if event.get("type") == "diagnostic":
+                diagnostic = event["diagnostic"]
+                print(f"{diagnostic['severity']}: {diagnostic['summary']}: {diagnostic.get('detail', '')}")
         print(exc.stderr or "")
         raise
     plans = {}

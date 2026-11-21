@@ -18,7 +18,7 @@ module "registry" {
   project_id   = var.project_id
   region       = var.region
   labels       = var.labels
-  repositories = var.repositories
+  repositories = local.named_repositories
   depends_on   = [google_project_service.platform]
 }
 module "secrets" {
@@ -26,7 +26,7 @@ module "secrets" {
   project_id = var.project_id
   region     = var.region
   labels     = var.labels
-  secrets    = var.secrets
+  secrets    = local.named_secrets
   depends_on = [google_project_service.platform]
 }
 module "cache" {
@@ -35,8 +35,8 @@ module "cache" {
   project_id        = var.project_id
   region            = var.region
   labels            = var.labels
-  cache             = var.cache
+  cache             = var.cache == null ? null : merge(var.cache, { name = module.naming.names["cache"] })
   network_id        = module.networking.network_id
-  reserved_ip_range = var.private_service_access_config.address_name
+  reserved_ip_range = local.named_psa.address_name
   depends_on        = [google_project_service.platform, module.networking]
 }
