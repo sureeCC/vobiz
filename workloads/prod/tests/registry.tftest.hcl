@@ -1,0 +1,23 @@
+mock_provider "google" {}
+run "repository_contract" {
+  command = plan
+  module { source = "./registry" }
+  variables {
+    project_id = "test-project"
+    region     = "asia-south1"
+    repositories = {
+      app = {
+        readers = ["serviceAccount:node@test-project.iam.gserviceaccount.com"]
+        writers = ["serviceAccount:build@test-project.iam.gserviceaccount.com"]
+      }
+    }
+  }
+  assert {
+    condition     = google_artifact_registry_repository.repository["app"].format == "DOCKER" && google_artifact_registry_repository.repository["app"].docker_config[0].immutable_tags && google_artifact_registry_repository.repository["app"].project == "test-project" && length(google_artifact_registry_repository_iam_member.access) == 2
+    error_message = "Registry must preserve Docker configuration, immutable tags and repository IAM."
+  }
+  assert {
+    condition     = toset([for grant in google_artifact_registry_repository_iam_member.access : grant.role]) == toset(["roles/artifactregistry.reader", "roles/artifactregistry.writer"])
+    error_message = "Read and write identities must receive their intended repository roles."
+  }
+}

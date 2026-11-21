@@ -1,0 +1,33 @@
+variable "project_id" { type = string }
+variable "region" { type = string }
+variable "labels" {
+  type    = map(string)
+  default = {}
+}
+variable "cache" {
+  type = object({
+    name                 = string
+    memory_size_gb       = optional(number, 5)
+    tier                 = optional(string, "STANDARD_HA")
+    redis_version        = optional(string, "REDIS_7_2")
+    maintenance_day      = optional(string, "SUNDAY")
+    maintenance_hour_utc = optional(number, 3)
+  })
+  nullable    = false
+  description = "Private Redis configuration; null omits Redis."
+  validation {
+    condition     = var.cache == null ? true : var.cache.memory_size_gb >= 1 && floor(var.cache.memory_size_gb) == var.cache.memory_size_gb
+    error_message = "Redis memory must be a positive whole number of GiB."
+  }
+  validation {
+    condition     = var.cache == null ? true : contains(["BASIC", "STANDARD_HA"], var.cache.tier)
+    error_message = "Redis tier must be BASIC or STANDARD_HA."
+  }
+  validation {
+    condition     = var.cache == null ? true : contains(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"], var.cache.maintenance_day) && var.cache.maintenance_hour_utc >= 0 && var.cache.maintenance_hour_utc <= 23 && floor(var.cache.maintenance_hour_utc) == var.cache.maintenance_hour_utc
+    error_message = "Supply an uppercase weekday and a whole UTC hour from 0 to 23."
+  }
+}
+
+variable "network_id" { type = string }
+variable "reserved_ip_range" { type = string }

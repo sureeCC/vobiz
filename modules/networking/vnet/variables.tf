@@ -91,7 +91,7 @@ variable "egress_rules" {
       metadata = string
     }))
   }))
-  description = "List of egress rules. This will be ignored if variable 'rules' is non-empty"
+  description = "Egress firewall rules for this VPC. Empty creates no explicit egress rules."
   default     = []
 }
 
@@ -120,7 +120,7 @@ variable "ingress_rules" {
       metadata = string
     }))
   }))
-  description = "List of ingress rules. This will be ignored if variable 'rules' is non-empty"
+  description = "Ingress firewall rules for this VPC. Empty creates no explicit ingress rules."
   default     = []
 }
 
