@@ -49,12 +49,19 @@ def run(args):
         run_tests()
         return
     plan = Path(args.plan).resolve()
+    init = ["init", "-input=false"]
+    backend = getattr(args, "backend_config", None)
+    if backend:
+        backend = Path(backend).resolve()
+        if not backend.is_file():
+            raise ValueError(f"Backend configuration does not exist: {backend}")
+        init.extend(["-reconfigure", f"-backend-config={backend}"])
     if args.command == "plan":
         variables = Path(args.var_file).resolve()
         if not variables.is_file():
             raise ValueError(f"Variable file does not exist: {variables}")
         plan.parent.mkdir(parents=True, exist_ok=True)
-        execute("init", "-input=false")
+        execute(*init)
         execute("validate", "-no-color")
         execute("plan", "-input=false", "-lock-timeout=5m",
                 f"-var-file={variables}", f"-out={plan}")
@@ -62,7 +69,7 @@ def run(args):
     else:
         if not plan.is_file():
             raise ValueError(f"Saved plan does not exist: {plan}")
-        execute("init", "-input=false", "-lockfile=readonly")
+        execute(*init, "-lockfile=readonly")
         execute("apply", "-input=false", "-lock-timeout=5m", str(plan))
 
 
@@ -74,8 +81,10 @@ def main():
     plan.add_argument("--var-file", required=True,
                       help="Path relative to your current directory, or absolute")
     plan.add_argument("--plan", default=str(ROOT / "artifacts" / "prod.tfplan"))
+    plan.add_argument("--backend-config", help="Optional backend HCL file; selects the existing state without migrating it")
     apply = commands.add_parser("apply")
     apply.add_argument("--plan", default=str(ROOT / "artifacts" / "prod.tfplan"))
+    apply.add_argument("--backend-config", help="Use the same backend HCL file used when planning")
     args = parser.parse_args()
     try:
         run(args)

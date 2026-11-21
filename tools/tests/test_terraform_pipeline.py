@@ -62,6 +62,34 @@ class PipelineTests(unittest.TestCase):
                                                 plan=str(Path(folder) / "plan")))
         execute.assert_not_called()
 
+    @patch.object(pipeline, "execute")
+    def test_explicit_backend_is_used_for_plan_and_saved_plan_apply(self, execute):
+        with tempfile.TemporaryDirectory() as folder:
+            backend = Path(folder) / "backend.hcl"
+            backend.write_text('bucket = "test-state"')
+            variables = Path(folder) / "production.tfvars"
+            variables.write_text('project_id = "test-project"')
+            plan = Path(folder) / "review.tfplan"
+            plan.write_bytes(b"saved-plan")
+            for command in ["plan", "apply"]:
+                execute.reset_mock()
+                pipeline.run(argparse.Namespace(command=command, var_file=str(variables),
+                                                plan=str(plan), backend_config=str(backend)))
+                init = execute.call_args_list[0].args
+                self.assertIn("-reconfigure", init)
+                self.assertIn(f"-backend-config={backend}", init)
+                self.assertNotIn("-migrate-state", init)
+                if command == "apply":
+                    self.assertIn("-lockfile=readonly", init)
+
+    @patch.object(pipeline, "execute")
+    def test_missing_backend_does_not_run_terraform(self, execute):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(ValueError):
+                pipeline.run(argparse.Namespace(command="plan", plan=str(Path(folder) / "plan"),
+                                                backend_config=str(Path(folder) / "missing")))
+        execute.assert_not_called()
+
     @patch.object(pipeline, "run_tests")
     @patch.object(pipeline.subprocess, "run")
     @patch.object(pipeline, "execute")

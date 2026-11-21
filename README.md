@@ -62,6 +62,9 @@ Configure these repository variables:
 - GCP_WIF_PROVIDER: GitHub-to-Google Workload Identity Federation provider.
 - GCP_PLAN_SERVICE_ACCOUNT: plan identity with resource read and state locking access.
 - GCP_APPLY_SERVICE_ACCOUNT: apply identity with resource management and state access.
+  Leave unset for plan-only operation.
+- TF_STATE_BUCKET: the existing Terraform state bucket to use.
+- TF_STATE_PREFIX: the shared object prefix, normally terraform-state/prod.
 
 Set repository secret PROD_TFVARS_HCL to the complete production Terraform inputs.
 Configure the GitHub environment production with required reviewers and deployment
@@ -155,3 +158,14 @@ elsewhere need ownership reconciliation/import rather than duplicate creation.
 The Python validation command checks the actual production mocked resource
 plans for firewall fields, default-route policy, PSA network/range linkage and
 API lifecycle, in addition to Terraform's test assertions.
+
+
+GitHub writes an explicit backend.hcl from TF_STATE_BUCKET and TF_STATE_PREFIX
+for both plan and apply. These override the checked-in backend defaults without
+migrating existing state. Local runs can pass --backend-config workloads/prod/backend.hcl
+to select the same bucket. Keep the original backend defaults for existing Vobiz
+deployments. Tainytails uses a separate bucket and the same single-state layout.
+
+The current Tainytails GitHub configuration is plan-only: GCP_APPLY_SERVICE_ACCOUNT
+is intentionally unset. Selecting apply fails before cloud authentication until
+an apply account and its production approval setup are explicitly configured.

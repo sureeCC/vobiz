@@ -33,6 +33,15 @@ jobs:
         with:
           terraform_version: "1.16.6"
           terraform_wrapper: false
+      - name: Check apply configuration
+        if: github.event_name == 'workflow_dispatch' && inputs.apply
+        env:
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$APPLY_SERVICE_ACCOUNT" ]; then
+            echo "::error::Apply is not configured. Run with apply unchecked."
+            exit 1
+          fi
       - run: python -m unittest discover -s tools/tests -v
       - run: python tools/terraform_pipeline.py validate
 
@@ -59,16 +68,25 @@ jobs:
       - name: Write production inputs
         env:
           TFVARS_HCL: ${{ secrets.PROD_TFVARS_HCL }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_PREFIX: ${{ vars.TF_STATE_PREFIX }}
         run: |
           python - <<'PY'
+          import json
           import os
           from pathlib import Path
           values = os.environ["TFVARS_HCL"]
           if not values.strip():
               raise SystemExit("Configure PROD_TFVARS_HCL before planning")
           Path("workloads/prod/terraform.tfvars").write_text(values, encoding="utf-8")
+          bucket = os.environ["TF_STATE_BUCKET"].strip()
+          prefix = os.environ["TF_STATE_PREFIX"].strip()
+          if not bucket or not prefix:
+              raise SystemExit("Configure TF_STATE_BUCKET and TF_STATE_PREFIX before planning")
+          backend = f"bucket = {json.dumps(bucket)}\nprefix = {json.dumps(prefix)}\n"
+          Path("workloads/prod/backend.hcl").write_text(backend, encoding="utf-8")
           PY
-      - run: python tools/terraform_pipeline.py plan --var-file workloads/prod/terraform.tfvars
+      - run: python tools/terraform_pipeline.py plan --var-file workloads/prod/terraform.tfvars --backend-config workloads/prod/backend.hcl
       - uses: actions/upload-artifact@v4
         with:
           name: production-plan
@@ -103,4 +121,20 @@ jobs:
         with:
           name: production-plan
           path: artifacts
-      - run: python tools/terraform_pipeline.py apply
+      - name: Write backend configuration
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_PREFIX: ${{ vars.TF_STATE_PREFIX }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          bucket = os.environ["TF_STATE_BUCKET"].strip()
+          prefix = os.environ["TF_STATE_PREFIX"].strip()
+          if not bucket or not prefix:
+              raise SystemExit("Configure TF_STATE_BUCKET and TF_STATE_PREFIX before applying")
+          backend = f"bucket = {json.dumps(bucket)}\nprefix = {json.dumps(prefix)}\n"
+          Path("workloads/prod/backend.hcl").write_text(backend, encoding="utf-8")
+          PY
+      - run: python tools/terraform_pipeline.py apply --backend-config workloads/prod/backend.hcl
