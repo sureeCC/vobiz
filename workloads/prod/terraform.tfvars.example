@@ -1,7 +1,7 @@
-# Resource names come from modules/naming: shortcode-vobiz-prod-region-NNN.
-# Review replacements before adopting this convention in an existing deployment.
-project_id = "gcp-voice-infra"
-region     = "asia-south1"
+# Merge reviewed values into your existing production tfvars; retain deployed names.
+project_id   = "gcp-voice-infra"
+region       = "asia-south1"
+network_name = "prod-vpc"
 subnets = [{
   subnet_name           = "private"
   subnet_ip             = "10.80.0.0/20"
@@ -14,7 +14,9 @@ routes           = []
 ingress_rules                          = []
 egress_rules                           = []
 delete_default_internet_gateway_routes = false
+router_name                            = "prod-router"
 router_description                     = "Production egress"
+network                                = "projects/gcp-voice-infra/global/networks/prod-vpc"
 nats = [{
   name                               = "prod-nat"
   nat_ip_allocate_option             = "AUTO_ONLY"
@@ -35,9 +37,11 @@ repositories = {
 
 private_service_access_config = {
   enable_private_services_connection = true
+  address_name                       = "vobiz-private-services"
   prefix_length                      = 16
 }
 cache = {
+  name                 = "vobiz-cache"
   memory_size_gb       = 5
   tier                 = "STANDARD_HA"
   redis_version        = "REDIS_7_2"
@@ -53,13 +57,3 @@ secrets = {
   }
 }
 # No secret values belong in this file. Add secret versions using Secret Manager.
-
-
-# Defaults to 001 for each shortcode/region. Assign explicit, permanent numbers
-# when adding more resources of the same type in one region, for example:
-# naming_sequences = {
-#   "secret/vobiz-app-config" = 1
-#   "secret/another-config" = 2
-#   "subnet/private" = 1
-#   "subnet/another-subnet" = 2
-# }

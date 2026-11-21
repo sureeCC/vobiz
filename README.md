@@ -25,8 +25,7 @@ tools/terraform_pipeline.py
 ```
 
 Reusable implementations remain in modules/networking. GKE and organization
-directories are empty scaffolds. Resource names now come from modules/naming using
-shortcode-vobiz-environment-region-NNN.
+directories are empty scaffolds. Naming remains explicitly caller-supplied.
 
 ## Local use
 
@@ -90,7 +89,7 @@ refactor should show address moves with unchanged resource settings. No live
 state has been inspected or modified during this change.
 
 Existing behavior is retained: router creation is unconditional despite the
-legacy create_router variable; the router now uses the managed VPC output.
+legacy create_router variable; the router network comes from the network input.
 Firewall, PSA and default-route deletion inputs now flow through both VPC
 wrappers to the upstream network module.
 
@@ -99,7 +98,7 @@ wrappers to the upstream network module.
 
 These components are child modules under workloads/prod and use the existing
 backend, pipeline and saved production plan. Repository and secret map keys are
-stable logical identifiers; physical resource IDs are generated. Shared project/region inputs configure all Google
+physical resource IDs. Shared project/region inputs configure all Google
 providers, and labels apply to the new platform resources.
 
 Merge the platform inputs in workloads/prod/terraform.tfvars.example into your
@@ -141,7 +140,7 @@ and the PSA connection/reserved range. No service-account keys are created.
 
 Configure ingress_rules and egress_rules in the root production tfvars. Both
 are forwarded through workloads/prod/networking and modules/networking/vnet.
-Rules use generated physical names and preserve directions, ranges, allow/deny protocols,
+Rules preserve their supplied names, directions, ranges, allow/deny protocols,
 ports, priority, target tags or service accounts, and logging configuration.
 Empty lists add no explicit firewall rules. The example leaves them empty;
 define rules for your actual workload sources and targets.
@@ -183,24 +182,3 @@ IDs and exact workflow path/ref. The plan account uses the repository-ID
 attribute for impersonation, so GitHub's legacy and immutable subject formats
 both work. Expanding cloud planning to additional collaborators requires
 updating both the workflow actor filter and the GCP provider condition.
-
-
-## Naming convention
-
-[modules/naming](modules/naming/README.md) generates every configurable managed
-resource name as shortcode-vobiz-environment-region-NNN. Environment comes from
-the workload directory (prod); the region comes from Terraform inputs.
-Redis uses rc and Secret Manager uses sc, so the current region produces
-rc-vobiz-prod-asia-south1-001 and sc-vobiz-prod-asia-south1-001.
-
-Use naming_sequences to assign stable numbers to repeated resources of the same
-shortcode and region. Defaults are 001; duplicates fail rather than renumbering
-existing resources. The resource_names output lists generated names by logical
-inventory key. Subnet, route, firewall and NAT input names now act as logical
-keys; managed NAT references resolve those keys to actual names and paths.
-
-Legacy root network_name, router_name, network, cache.name and PSA address_name
-inputs remain accepted for existing tfvars, but generated names take precedence.
-They are no longer required. The state bucket and GitHub identities are unchanged.
-Adopting the naming convention may replace previously deployed resources; inspect
-the complete plan before applying. Current GitHub access remains plan-only.

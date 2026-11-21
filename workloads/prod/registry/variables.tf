@@ -6,7 +6,6 @@ variable "labels" {
 }
 variable "repositories" {
   type = map(object({
-    repository_id  = optional(string)
     description    = optional(string, "Vobiz Docker images")
     readers        = optional(set(string), [])
     writers        = optional(set(string), [])

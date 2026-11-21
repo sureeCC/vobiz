@@ -6,7 +6,6 @@ variable "labels" {
 }
 variable "secrets" {
   type = map(object({
-    secret_id             = optional(string)
     accessors             = optional(set(string), [])
     replication_locations = optional(set(string), [])
   }))

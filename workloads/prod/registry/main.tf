@@ -2,7 +2,7 @@ resource "google_artifact_registry_repository" "repository" {
   for_each      = var.repositories
   project       = var.project_id
   location      = var.region
-  repository_id = coalesce(each.value.repository_id, each.key)
+  repository_id = each.key
   description   = each.value.description
   format        = "DOCKER"
   labels        = var.labels
