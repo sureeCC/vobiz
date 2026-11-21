@@ -121,11 +121,16 @@ jobs:
               output.write(summary)
           PY
       # PR plans are review-only; do not publish a potentially sensitive binary.
+      - name: Bundle reviewed provider lock
+        if: github.event_name == 'workflow_dispatch'
+        run: cp workloads/prod/.terraform.lock.hcl artifacts/provider-lock.hcl
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'workflow_dispatch'
         with:
           name: production-plan
-          path: artifacts/prod.tfplan
+          path: |
+            artifacts/prod.tfplan
+            artifacts/provider-lock.hcl
           if-no-files-found: error
           retention-days: 1
 
@@ -156,6 +161,8 @@ jobs:
         with:
           name: production-plan
           path: artifacts
+      - name: Restore reviewed provider lock
+        run: cp artifacts/provider-lock.hcl workloads/prod/.terraform.lock.hcl
       - name: Write backend configuration
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}

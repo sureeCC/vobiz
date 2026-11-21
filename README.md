@@ -171,9 +171,14 @@ migrating existing state. Local runs can pass --backend-config workloads/prod/ba
 to select the same bucket. Keep the original backend defaults for existing Vobiz
 deployments. Tainytails uses a separate bucket and the same single-state layout.
 
-The current Tainytails GitHub configuration is plan-only: GCP_APPLY_SERVICE_ACCOUNT
-is intentionally unset. Selecting apply fails before cloud authentication until
-an apply account and its production approval setup are explicitly configured.
+Tainytails has separate plan and apply service accounts. The apply identity is
+restricted to the production environment on main, which requires deployment
+approval. Selecting apply remains blocked if GCP_APPLY_SERVICE_ACCOUNT is unset.
+
+Manual plan artifacts contain both the saved binary plan and provider-lock.hcl,
+copied after the plan runner initializes its providers. Apply restores that exact
+lock file before read-only initialization. This preserves platform-specific
+provider checksums across runners; checksum validation is never disabled.
 
 
 GitHub federation accepts the main workflow_dispatch context and owner-triggered
