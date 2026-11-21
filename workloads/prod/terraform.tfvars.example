@@ -1,0 +1,59 @@
+# Merge reviewed values into your existing production tfvars; retain deployed names.
+project_id   = "gcp-voice-infra"
+region       = "asia-south1"
+network_name = "prod-vpc"
+subnets = [{
+  subnet_name           = "private"
+  subnet_ip             = "10.80.0.0/20"
+  subnet_region         = "asia-south1"
+  subnet_private_access = "true"
+}]
+secondary_ranges = {}
+routes           = []
+# Supply workload-specific source/destination ranges and targets.
+ingress_rules                          = []
+egress_rules                           = []
+delete_default_internet_gateway_routes = false
+router_name                            = "prod-router"
+router_description                     = "Production egress"
+network                                = "projects/gcp-voice-infra/global/networks/prod-vpc"
+nats = [{
+  name                               = "prod-nat"
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+}]
+
+labels = { environment = "prod", managed_by = "terraform" }
+
+repositories = {
+  vobiz-app = {
+    description    = "Vobiz application container images"
+    immutable_tags = true
+    # Supply actual node/pull and build/push identities.
+    readers = []
+    writers = []
+  }
+}
+
+private_service_access_config = {
+  enable_private_services_connection = true
+  address_name                       = "vobiz-private-services"
+  prefix_length                      = 16
+}
+cache = {
+  name                 = "vobiz-cache"
+  memory_size_gb       = 5
+  tier                 = "STANDARD_HA"
+  redis_version        = "REDIS_7_2"
+  maintenance_day      = "SUNDAY"
+  maintenance_hour_utc = 3
+}
+
+secrets = {
+  vobiz-app-config = {
+    # Supply actual runtime service-account IAM members.
+    accessors             = []
+    replication_locations = ["asia-south1"]
+  }
+}
+# No secret values belong in this file. Add secret versions using Secret Manager.

@@ -1,0 +1,175 @@
+name: Production Terraform
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "workloads/prod/**"
+      - "modules/**"
+      - "tools/**"
+      - ".github/workflows/terraform-prod.yml"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the saved plan after production approval
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-prod
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - name: Check apply configuration
+        if: github.event_name == 'workflow_dispatch' && inputs.apply
+        env:
+          APPLY_SERVICE_ACCOUNT: ${{ vars.GCP_APPLY_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$APPLY_SERVICE_ACCOUNT" ]; then
+            echo "::error::Apply is not configured. Run with apply unchecked."
+            exit 1
+          fi
+      - run: python -m unittest discover -s tools/tests -v
+      - run: python tools/terraform_pipeline.py validate
+
+  plan:
+    # Cloud access is limited to owner-triggered, same-repository PRs.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor_id == '98948864')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SERVICE_ACCOUNT }}
+      - name: Write production inputs
+        env:
+          TFVARS_HCL: ${{ secrets.PROD_TFVARS_HCL }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_PREFIX: ${{ vars.TF_STATE_PREFIX }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          values = os.environ["TFVARS_HCL"]
+          if not values.strip():
+              raise SystemExit("Configure PROD_TFVARS_HCL before planning")
+          Path("workloads/prod/terraform.tfvars").write_text(values, encoding="utf-8")
+          bucket = os.environ["TF_STATE_BUCKET"].strip()
+          prefix = os.environ["TF_STATE_PREFIX"].strip()
+          if not bucket or not prefix:
+              raise SystemExit("Configure TF_STATE_BUCKET and TF_STATE_PREFIX before planning")
+          backend = f"bucket = {json.dumps(bucket)}\nprefix = {json.dumps(prefix)}\n"
+          Path("workloads/prod/backend.hcl").write_text(backend, encoding="utf-8")
+          PY
+      - name: Terraform plan
+        run: python tools/terraform_pipeline.py plan --var-file workloads/prod/terraform.tfvars --backend-config workloads/prod/backend.hcl
+      - name: Publish plan summary
+        env:
+          TF_PLAN_REF: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          result = subprocess.run(
+              ["terraform", "-chdir=workloads/prod", "show", "-json", str(Path("artifacts/prod.tfplan").resolve())],
+              check=True, capture_output=True, text=True,
+          )
+          plan = json.loads(result.stdout)
+          changes = [r["change"]["actions"] for r in plan.get("resource_changes", []) if r["mode"] == "managed"]
+          add = sum("create" in actions for actions in changes)
+          update = sum(actions == ["update"] for actions in changes)
+          destroy = sum("delete" in actions for actions in changes)
+          summary = (
+              f"### Terraform plan\n\nCommit: `{os.environ['TF_PLAN_REF']}`\n\n"
+              f"**{add} to add, {update} to change, {destroy} to destroy.**\n\n"
+              "Read the Terraform plan step for the full redacted plan. No resources were applied.\n"
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as output:
+              output.write(summary)
+          PY
+      # PR plans are review-only; do not publish a potentially sensitive binary.
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: production-plan
+          path: artifacts/prod.tfplan
+          if-no-files-found: error
+          retention-days: 1
+
+  apply:
+    if: github.event_name == 'workflow_dispatch' && inputs.apply && github.ref == 'refs/heads/main'
+    needs: plan
+    environment: production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_APPLY_SERVICE_ACCOUNT }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-plan
+          path: artifacts
+      - name: Write backend configuration
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_PREFIX: ${{ vars.TF_STATE_PREFIX }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          bucket = os.environ["TF_STATE_BUCKET"].strip()
+          prefix = os.environ["TF_STATE_PREFIX"].strip()
+          if not bucket or not prefix:
+              raise SystemExit("Configure TF_STATE_BUCKET and TF_STATE_PREFIX before applying")
+          backend = f"bucket = {json.dumps(bucket)}\nprefix = {json.dumps(prefix)}\n"
+          Path("workloads/prod/backend.hcl").write_text(backend, encoding="utf-8")
+          PY
+      - run: python tools/terraform_pipeline.py apply --backend-config workloads/prod/backend.hcl
