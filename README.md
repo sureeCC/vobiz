@@ -53,9 +53,14 @@ included in the same plan; the runner has no component or target selector.
 
 ## GitHub Actions
 
-Pull requests run formatting, schema validation, mocked Terraform tests and Python
-tests without cloud credentials. Dispatch Production Terraform on main to create
-a full production plan. Enable the apply input to continue to the production
+All pull requests targeting main run formatting, schema validation, mocked
+Terraform tests and Python tests without cloud credentials. Same-repository PR
+runs triggered by the repository owner also generate a real production plan
+using the plan service account. Forks, Dependabot and other actors skip cloud
+planning. The plan appears in logs and its counts appear in the Actions job
+summary. PRs never apply and do not upload the binary plan.
+
+Dispatch Production Terraform on main to create a full production plan. Enable the apply input to continue to the production
 environment approval and then apply the same run's saved plan.
 
 Configure these repository variables:
@@ -169,3 +174,11 @@ deployments. Tainytails uses a separate bucket and the same single-state layout.
 The current Tainytails GitHub configuration is plan-only: GCP_APPLY_SERVICE_ACCOUNT
 is intentionally unset. Selecting apply fails before cloud authentication until
 an apply account and its production approval setup are explicitly configured.
+
+
+GitHub federation accepts the main workflow_dispatch context and owner-triggered
+pull_request runs targeting main, with the expected repository/owner numeric
+IDs and exact workflow path/ref. The plan account uses the repository-ID
+attribute for impersonation, so GitHub's legacy and immutable subject formats
+both work. Expanding cloud planning to additional collaborators requires
+updating both the workflow actor filter and the GCP provider condition.

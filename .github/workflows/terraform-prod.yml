@@ -2,6 +2,7 @@ name: Production Terraform
 
 on:
   pull_request:
+    branches: [main]
     paths:
       - "workloads/prod/**"
       - "modules/**"
@@ -46,7 +47,12 @@ jobs:
       - run: python tools/terraform_pipeline.py validate
 
   plan:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    # Cloud access is limited to owner-triggered, same-repository PRs.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor_id == '98948864')
     needs: validate
     runs-on: ubuntu-latest
     permissions:
@@ -86,8 +92,37 @@ jobs:
           backend = f"bucket = {json.dumps(bucket)}\nprefix = {json.dumps(prefix)}\n"
           Path("workloads/prod/backend.hcl").write_text(backend, encoding="utf-8")
           PY
-      - run: python tools/terraform_pipeline.py plan --var-file workloads/prod/terraform.tfvars --backend-config workloads/prod/backend.hcl
+      - name: Terraform plan
+        run: python tools/terraform_pipeline.py plan --var-file workloads/prod/terraform.tfvars --backend-config workloads/prod/backend.hcl
+      - name: Publish plan summary
+        env:
+          TF_PLAN_REF: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          result = subprocess.run(
+              ["terraform", "-chdir=workloads/prod", "show", "-json", str(Path("artifacts/prod.tfplan").resolve())],
+              check=True, capture_output=True, text=True,
+          )
+          plan = json.loads(result.stdout)
+          changes = [r["change"]["actions"] for r in plan.get("resource_changes", []) if r["mode"] == "managed"]
+          add = sum("create" in actions for actions in changes)
+          update = sum(actions == ["update"] for actions in changes)
+          destroy = sum("delete" in actions for actions in changes)
+          summary = (
+              f"### Terraform plan\n\nCommit: `{os.environ['TF_PLAN_REF']}`\n\n"
+              f"**{add} to add, {update} to change, {destroy} to destroy.**\n\n"
+              "Read the Terraform plan step for the full redacted plan. No resources were applied.\n"
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as output:
+              output.write(summary)
+          PY
+      # PR plans are review-only; do not publish a potentially sensitive binary.
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: production-plan
           path: artifacts/prod.tfplan
@@ -95,7 +130,7 @@ jobs:
           retention-days: 1
 
   apply:
-    if: inputs.apply && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.apply && github.ref == 'refs/heads/main'
     needs: plan
     environment: production
     runs-on: ubuntu-latest
